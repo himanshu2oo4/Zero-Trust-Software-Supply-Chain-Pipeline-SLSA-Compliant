@@ -1,0 +1,65 @@
+name: DevSecops pipeline 
+on: 
+    push : 
+        branches: 
+            - main 
+    pull_request : 
+        branches: 
+            - main 
+    
+jobs: 
+    code-security: 
+        runs-on: ubuntu-latest 
+        steps: 
+            - name: checkout code 
+              uses: actions/checkout@v4 
+              with: 
+                  fetch-depth: 0
+
+            - name : gitLeak scan (secret detector)
+              uses: gitleaks/gitleaks-action@v2.13.0
+              env: 
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: checking source code logic 
+              run: | 
+                python3 -m pip install semgrep 
+                echo "scanning using standard OWASP TOP 10 ruleset "
+                semgrep scan --config=auto --error --severity=ERROR
+
+        
+    container-security: 
+        name: container & dependency security 
+        needs: code-security 
+        runs-on: ubuntu-latest 
+        steps: 
+            - uses: actions/checkout@v4 
+            - name: scans requirements.txt with trivy 
+              uses: aquasecurity/trivy-action@master 
+              with: 
+                scan-type: 'fs' 
+                scan-ref: '.' 
+                format: 'table' 
+                exit-code: '1' 
+                ignore-unfixed: true 
+                vuln-type: 'os,library' 
+                severity: 'CRITICAL,HIGH,MEDIUM'
+            
+            # build our hardened docker image
+            - name: setup docker buildx 
+              uses: docker/setup-buildx-action@v3 
+
+            - name: Build docker image locally 
+              run: | 
+                docker build -t secure-payment:${{ github.sha }} . 
+
+      # Checkpoint 4: Image Vulnerability Scan
+            - name: Scan Container Image with Trivy
+              uses: aquasecurity/trivy-action@master
+              with:
+                format: 'table'
+                exit-code: '1' # Block build if the Linux base or packages have Critical bugs
+                image-ref: 'secure-payment-api:${{ github.sha }}'
+                severity: 'CRITICAL'            
+                ignore-unfixed: true # Ignore bugs that vendor hasn't released a patch for yet
+ 
