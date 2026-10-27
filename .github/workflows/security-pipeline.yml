@@ -32,7 +32,7 @@ jobs:
                 semgrep scan --config=auto --json --output=semgrep-report.json || true
 
             - name: Upload code security scan reports 
-              uses: actions/upload-artifact@v3 
+              uses: actions/upload-artifact@v4  
               if: always()    # upload if a step have the warnings also 
               with: 
                 name: code-security-scan-reports
