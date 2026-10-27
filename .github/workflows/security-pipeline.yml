@@ -53,6 +53,11 @@ jobs:
         runs-on: ubuntu-latest 
         steps: 
             - uses: actions/checkout@v4 
+            - name: Set Lowercase Image Name
+              run: |
+                REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+                echo "IMAGE_NAME=ghcr.io/$REPO_LOWER/secure-payment" >> $GITHUB_ENV
+
             - name: scans requirements.txt with trivy 
               uses: aquasecurity/trivy-action@master 
               with: 
@@ -81,8 +86,8 @@ jobs:
                 push: true
           # Converts repository name to lowercase (Docker registries require lowercase)
                 tags: |
-                  ghcr.io/${{ github.repository }}/secure-payment:${{ github.sha }}
-                  ghcr.io/${{ github.repository }}/secure-payment:latest
+                  ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                  ghcr.io/${{ env.IMAGE_NAME }}:latest
 
             - name: setup docker buildx 
               uses: docker/setup-buildx-action@v3 
@@ -92,7 +97,7 @@ jobs:
               with:
                 format: 'table'
                 exit-code: '0' # used 0 for testing  1 -> Block build if the Linux base or packages have Critical bugs
-                image-ref: 'secure-payment:${{ github.sha }}'
+                image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
                 severity: 'CRITICAL'            
                 ignore-unfixed: true # Ignore bugs that vendor hasn't released a patch for yet
  
@@ -106,7 +111,7 @@ jobs:
             - name: Generate SBOM using Syft
               run: | 
                 echo "Generating SBOM for the Docker image..."
-                syft secure-payment:${{ github.sha }} -o json > sbom.json
+                syft ${{ env.IMAGE_NAME }}:${{ github.sha }} -o json > sbom.json
 
             - name: uploading SBOM artifact
               uses: actions/upload-artifact@v4 
@@ -131,14 +136,14 @@ jobs:
                   echo "$COSIGN_PRIVATE_KEY" > cosign.key 
 
 
-                  IMAGE_TAG="ghcr.io/${{ github.repository }}/secure-payment:${{ github.sha }}"
+                  IMAGE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
                   cosign sign --yes --key cosign.key "$IMAGE_TAG"
                   rm -f cosign.key         # clean the private key after signing 
 
 
             - name: Verify Signature with Public Key
               run: |
-                IMAGE_TAG="ghcr.io/${{ github.repository }}/secure-payment:${{ github.sha }}"
+                IMAGE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
                 echo "Verifying signature using cosign.pub..."
                 cosign verify --key cosign.pub "$IMAGE_TAG"
 
