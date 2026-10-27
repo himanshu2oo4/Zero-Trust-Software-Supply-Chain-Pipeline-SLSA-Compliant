@@ -81,4 +81,24 @@ jobs:
                 severity: 'CRITICAL'            
                 ignore-unfixed: true # Ignore bugs that vendor hasn't released a patch for yet
  
-    
+            
+            - name: Installing syft (SBOM generator)
+              run: | 
+                echo "Installing Anchore Syft..."
+                curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+            
+            - name: Generate SBOM using Syft
+              run: | 
+                echo "Generating SBOM for the Docker image..."
+                syft secure-payment:${{ github.sha }} -o json > sbom.json
+
+            - name: uploading SBOM artifact
+              uses: actions/upload-artifact@v4 
+              if: always()    # upload if a step have the warnings also 
+              with: 
+                name: sbom-report
+                path: sbom.json
+                retention-days: 30 
+
+            

@@ -1,0 +1,18 @@
+CHECKS INSIDE OUR PIPELINE ----------------
+
+Gitleaks used for -> Secret Scanning	 | inside -> Git commit history & code	 | "Did an engineer accidentally commit an AWS secret key or database password?"
+
+
+Semgrep for ---> SAST (Static Analysis) scans Your Python source code	| "Did you write bad or dangerous code (like SQL injection or insecure logic)?"
+
+
+Trivy (FS)	for SCA (Dependency Scan) scans	requirements.txt | "Are any third-party libraries known to have security flaws (CVEs)?"
+
+Trivy (Image) for Container Vulnerability  scans Final Docker image	| "Does the underlying Linux OS in your container have any unpatched exploits?"
+
+An SBOM is the machine-readable "ingredients list" of every single file, library, license, and OS package baked inside your Docker container.
+
+🛠️ The Tool: Anchore Syft
+
+To build our SBOM, we will use an industry-standard open-source tool called Syft (created by Anchore). It can look inside our compiled Docker image, catalog every single Python library, Debian package, and helper binary, and output a clean CycloneDX JSON file.
+
