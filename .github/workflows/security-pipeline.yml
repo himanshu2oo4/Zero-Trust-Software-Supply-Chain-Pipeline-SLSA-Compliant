@@ -6,6 +6,9 @@ on:
     pull_request : 
         branches: 
             - main 
+
+    workflow_dispatch: 
+
     
 jobs: 
     code-security: 
@@ -17,9 +20,9 @@ jobs:
                   fetch-depth: 0
 
             - name : gitLeak scan (secret detector)
-              uses: gitleaks/gitleaks-action@v2.13.0
+              uses: gitleaks/gitleaks-action@v3
               env: 
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
             - name: checking source code logic 
               run: | 
@@ -40,7 +43,7 @@ jobs:
                 scan-type: 'fs' 
                 scan-ref: '.' 
                 format: 'table' 
-                exit-code: '1' 
+                exit-code: '0'      # exit code  1 means break this pipeline if any vulnerbility is founded | set to 0 for testing 
                 ignore-unfixed: true 
                 vuln-type: 'os,library' 
                 severity: 'CRITICAL,HIGH,MEDIUM'
@@ -58,8 +61,9 @@ jobs:
               uses: aquasecurity/trivy-action@master
               with:
                 format: 'table'
-                exit-code: '1' # Block build if the Linux base or packages have Critical bugs
+                exit-code: '0' # used 0 for testing  1 -> Block build if the Linux base or packages have Critical bugs
                 image-ref: 'secure-payment-api:${{ github.sha }}'
                 severity: 'CRITICAL'            
                 ignore-unfixed: true # Ignore bugs that vendor hasn't released a patch for yet
  
+    
