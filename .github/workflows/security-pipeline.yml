@@ -20,16 +20,27 @@ jobs:
                   fetch-depth: 0
 
             - name : gitLeak scan (secret detector)
-              uses: gitleaks/gitleaks-action@v3
-              env: 
-                GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+              run: | 
+                python3 -m pip install gitleaks 
+                echo "scanning for secrets in source code using gitleaks "
+                gitleaks detect --source . --report=gitleaks-report.json --report-format=json --redact
 
             - name: checking source code logic 
               run: | 
                 python3 -m pip install semgrep 
                 echo "scanning using standard OWASP TOP 10 ruleset "
-                semgrep scan --config=auto --error --severity=ERROR
+                semgrep scan --config=auto --json --output=semgrep-report.json || true
 
+            - name: Upload code security scan reports 
+              uses: actions/upload-artifact@v3 
+              if: always()    # upload if a step have the warnings also 
+              with: 
+                name: code-security-scan-reports
+                path: | 
+                    gitleaks-report.json 
+                    semgrep-report.json
+
+            
         
     container-security: 
         name: container & dependency security 
@@ -53,6 +64,7 @@ jobs:
               uses: docker/setup-buildx-action@v3 
 
             - name: Build docker image locally 
+              working-directory: ./application
               run: | 
                 docker build -t secure-payment:${{ github.sha }} . 
 

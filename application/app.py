@@ -15,7 +15,12 @@ def home():
         "message": "Welcome to UnderCover Secure Payment API",
         "environment": os.getenv("APP_ENV", "production")
     }
-AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE1234567890" # Fake AWS key for testing gitleak 
+AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE1234567890" 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)\
+
+
+for i in range(5): 
+    print("AWS_SECRET_KEY" : AWS_SECRET_KEY)
+
     
