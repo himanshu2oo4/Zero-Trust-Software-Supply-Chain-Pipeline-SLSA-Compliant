@@ -64,9 +64,7 @@ jobs:
                 vuln-type: 'os,library' 
                 severity: 'CRITICAL,HIGH,MEDIUM'
             
-            # build our hardened docker image
-            - name: setup docker buildx 
-              uses: docker/setup-buildx-action@v3 
+
 
             - name: Log in to GitHub Container Registry (GHCR)
               uses: docker/login-action@v3
@@ -85,6 +83,9 @@ jobs:
                 tags: |
                   ghcr.io/${{ github.repository }}/secure-payment:${{ github.sha }}
                   ghcr.io/${{ github.repository }}/secure-payment:latest
+
+            - name: setup docker buildx 
+              uses: docker/setup-buildx-action@v3 
       # Checkpoint 4: Image Vulnerability Scan
             - name: Scan Container Image with Trivy
               uses: aquasecurity/trivy-action@master
