@@ -16,3 +16,6 @@ An SBOM is the machine-readable "ingredients list" of every single file, library
 
 To build our SBOM, we will use an industry-standard open-source tool called Syft (created by Anchore). It can look inside our compiled Docker image, catalog every single Python library, Debian package, and helper binary, and output a clean CycloneDX JSON file.
 
+Kyverno is the guard standing directly at the Kubernetes API door. Before any pod is allowed to boot up on worker nodes, Kyverno intercepts the request, checks the container image against your cosign.pub public key, and asks: "Was this image signed by our official CI/CD pipeline?"
+Signed: The Pod starts immediately.
+Not Signed: Kubernetes rejects the request with a 403 Forbidden error. The container is never even pulled!

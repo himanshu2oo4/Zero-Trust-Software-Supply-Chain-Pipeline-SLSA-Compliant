@@ -1,2 +1,6 @@
 learnings.md
 .git
+.terraform
+.terraform** 
+terraform.tfstate
+cosign.pub 

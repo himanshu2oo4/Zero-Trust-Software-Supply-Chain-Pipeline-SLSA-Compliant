@@ -1,0 +1,33 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature-policy
+  annotations:
+    policies.kyverno.io/title: Verify Cosign Image Signature
+    policies.kyverno.io/description: >-
+      Blocks any Pod whose container image from ghcr.io
+      is not cryptographically signed by our CI/CD pipeline
+      using Cosign.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-cosign-signature
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+            namespaces:
+              - default  # Protect the default namespace
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/*"
+          attestors:
+            - entries:
+                - keys:
+                    secret:            # fetches the public key from secrets 
+                      name: cosign-public
+                      namespace: kyverno
+
+
