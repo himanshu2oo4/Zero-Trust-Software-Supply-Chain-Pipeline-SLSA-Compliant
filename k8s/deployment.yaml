@@ -18,7 +18,7 @@ spec:
       containers:
         - name: payment-api
           # Replace with your exact image from GitHub Actions
-          image: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment:d5fe86b55efe97faec60711f3276e47aab92c020
+          image: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment:12f2c8f6aaf9c4d6d981a768258ce63b83eb62df
           ports:
             - containerPort: 8080
           resources:

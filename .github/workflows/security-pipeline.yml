@@ -3,13 +3,17 @@ on:
     push : 
         branches: 
             - main 
+        paths-ignore: 
+          - "k8s/kustomization.yaml"
     pull_request : 
         branches: 
             - main 
+        paths-ignore: 
+          - "k8s/kustomization.yaml"
 
     workflow_dispatch: 
 permissions: 
-  contents: read
+  contents: write 
   packages: write 
     
 jobs: 
@@ -48,6 +52,8 @@ jobs:
             
         
     container-security: 
+        env: 
+            IMAGE: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment
         name: container & dependency security 
         needs: code-security 
         runs-on: ubuntu-latest 
@@ -88,6 +94,9 @@ jobs:
                 tags: |
                   ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
                   ghcr.io/${{ env.IMAGE_NAME }}:latest
+
+
+              
 
             - name: setup docker buildx 
               uses: docker/setup-buildx-action@v3 
@@ -148,7 +157,14 @@ jobs:
                 cosign verify --key cosign.pub "$IMAGE_TAG"
 
 
-          
+            - name: Update kustomization with new image tag 
+              run: | 
+                  echo "Updating the new image  tag in kustomization.yaml"
+                  cd k8s
+                  kustomize edit set image $IMAGE=$IMAGE:${{ github.sha }}
+
+
+
                 # Upload All Reports
             - name: Upload Security Reports & SBOM
               uses: actions/upload-artifact@v4
@@ -160,3 +176,12 @@ jobs:
                   trivy-image-report.json
                   sbom.cyclonedx.json
                 retention-days: 14
+
+
+            - name: pushing the changes to repo 
+              run: | 
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  git add k8s/kustomization.yaml
+                  git commit -m "Update image tag to ${{ github.sha }}"
+                  git push origin main

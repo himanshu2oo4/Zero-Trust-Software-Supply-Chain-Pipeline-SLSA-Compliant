@@ -1,0 +1,9 @@
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources: 
+  - deployment.yaml    # our file have both deployment and svc 
+
+images: 
+  - name: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment
+    newTag: 12f2c8f6aaf9c4d6d981a768258ce63b83eb62df
+
