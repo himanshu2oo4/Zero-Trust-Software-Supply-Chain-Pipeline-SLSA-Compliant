@@ -12,7 +12,10 @@
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:himanshu2oo4/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant:*"
+          "token.actions.githubusercontent.com:sub": [
+            "repo:himanshu2oo4@86143385/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant@1436026323:*",
+            "repo:himanshu2oo4/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant:*"
+          ]
         }
       }
     }

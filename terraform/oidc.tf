@@ -38,7 +38,7 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # Matches BOTH GitHub formats (with and without numeric ID)
+            # Permanent match: Both standard and GitHub's numeric ID format
             "token.actions.githubusercontent.com:sub" = [
               "repo:himanshu2oo4@86143385/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant@1436026323:*",
               "repo:himanshu2oo4/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant:*"
