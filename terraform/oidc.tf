@@ -38,8 +38,8 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # Replace with your actual GitHub username and repo name
-            "token.actions.githubusercontent.com:sub" = "repo:himanshu2oo4/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant:*"
+            # GitHub new format includes numeric User ID and Repo ID in sub
+            "token.actions.githubusercontent.com:sub" = "repo:himanshu2oo4@86143385/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant@1436026323:*"
           }
         }
       }
@@ -117,3 +117,7 @@ output "aws_account_id" {
   description = "Current AWS Account ID"
   value       = data.aws_caller_identity.current.account_id
 }
+
+
+
+
