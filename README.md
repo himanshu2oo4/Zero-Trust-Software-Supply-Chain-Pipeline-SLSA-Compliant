@@ -28,7 +28,43 @@ In standard CI/CD pipelines, container registries trust any image pushed to them
 ## 🏗️ Architecture & Pipeline Flow
 
 The pipeline executes a clean, boustrophedon (snake-layout) flow with dedicated security checkpoints:
-![alt text](devSecOps-project-workflow.png)
+========================================================================================================
+                          ZERO-TRUST SOFTWARE SUPPLY CHAIN PIPELINE (SLSA LEVEL 3)
+========================================================================================================
+
+ [ PHASE 1: Code & Shift-Left Security ]
+ ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+ │  1. Python App Code  │ ──► │  2. Gitleaks Scan    │ ──► │  3. Semgrep SAST     │ ──► │ 4. Hardened Docker   │
+ │  (FastAPI Service)   │     │  (Secret Detection)  │     │  (OWASP Top 10)      │     │ (Non-root UID 10001) │
+ └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
+                                                                                                   │
+ ┌─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ │
+ ▼
+ [ PHASE 2: Vulnerability Auditing & Supply Chain ]
+ ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+ │  5. Trivy Scan       │ ──► │  6. Build & Push     │ ──► │  7. Syft SBOM        │
+ │  (FS & OS CVEs)      │     │  (ghcr.io Registry)  │     │  (CycloneDX JSON)    │
+ └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
+                                                                      │
+ ┌────────────────────────────────────────────────────────────────────┘
+ │
+ ▼
+ [ PHASE 3: Cryptographic Signing & Orchestration ]
+ ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+ │  8. Cosign Signing   │ ──► │  9. Kustomize Tag    │ ──► │ 10. JSON Artifacts   │ ──► │ 11. Reusable Workflow│
+ │  (Digital Signature) │     │  (Dynamic Git SHA)   │     │ (Compliance Storage) │     │ (Master -> Infra CI) │
+ └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
+                                                                                                   │
+ ┌─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ │
+ ▼
+ [ PHASE 4: Cloud Infrastructure & Zero-Trust Admission ]
+ ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+ │ 12. AWS IAM OIDC     │ ──► │ 13. Terraform EKS    │ ──► │ 14. Kyverno Webhook  │ ──► │ 15. Production Nodes │
+ │ (Zero Static Keys)   │     │ (VPC + EKS v1.30)    │     │ (Signature Check)    │     │ (Unsigned Blocked 403│
+ └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────────────────┘
+========================================================================================================
 
 ---
 
