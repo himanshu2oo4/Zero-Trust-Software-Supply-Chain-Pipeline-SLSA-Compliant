@@ -65,6 +65,23 @@ resource "aws_iam_role_policy_attachment" "ec2_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
 
+resource "aws_iam_role_policy" "cloudwatch_logs" {
+  name = "cloudwatch-logs-access"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:*"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
 resource "aws_iam_role_policy_attachment" "iam_full_access" {
   role       = aws_iam_role.github_actions.name
   policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"

@@ -129,8 +129,8 @@ jobs:
         runs-on: ubuntu-latest 
         if: | 
            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-           (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply') ||
-           (github.event_name == 'workflow_call' && inputs.action == 'apply')
+           (inputs.action == 'apply') ||
+           (github.event.inputs.action == 'apply')
 
         steps: 
             - name: checkout code 
