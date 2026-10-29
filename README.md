@@ -30,46 +30,71 @@ In standard CI/CD pipelines, container registries trust any image pushed to them
 The pipeline executes a clean, boustrophedon (snake-layout) flow with dedicated security checkpoints:
 ```mermaid
 flowchart TD
-    %% High-Contrast Styling
+    %% High-Contrast Styling (Dark text on distinct colored cards)
     classDef stage1 fill:#f1f5f9,stroke:#334155,stroke-width:2px,rx:10px,ry:10px,color:#0f172a;
     classDef stage2 fill:#fee2e2,stroke:#dc2626,stroke-width:2px,rx:10px,ry:10px,color:#7f1d1d;
     classDef stage3 fill:#fef3c7,stroke:#d97706,stroke-width:2px,rx:10px,ry:10px,color:#78350f;
     classDef stage4 fill:#dcfce7,stroke:#16a34a,stroke-width:2px,rx:10px,ry:10px,color:#14532d;
     classDef stage5 fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,rx:10px,ry:10px,color:#1e1b4b;
-    subgraph R1 ["Phase 1: Code & Shift-Left Checks (➔)"]
+
+    %% ==========================================
+    %% ROW 1: Moves Left -> Right
+    %% ==========================================
+    subgraph R1 ["Phase 1: Code & Shift-Left Checks (Left to Right ➔)"]
         direction LR
         S1["<b>STAGE 1</b><br/>Python FastAPI<br/>App Code"]:::stage1
         S2["<b>Secret Scanning</b><br/>Gitleaks scans git history<br/>for secrets & keys"]:::stage1
         S3["<b>SAST Scan</b><br/>Semgrep scans code logic<br/>for OWASP bugs"]:::stage1
         S4["<b>Hardened Dockerfile</b><br/>Multi-stage build with<br/>non-root UID 10001"]:::stage1
+
         S1 --> S2 --> S3 --> S4
     end
-    subgraph R2 ["Phase 2: Vulnerability Auditing & Supply Chain (🠔)"]
+
+    %% ==========================================
+    %% ROW 2: Moves Right -> Left
+    %% ==========================================
+    subgraph R2 ["Phase 2: Vulnerability Auditing & Supply Chain (Right to Left 🠔)"]
         direction RL
         S5["<b>Trivy Scan</b><br/>Scans container image<br/>& filesystem for CVEs"]:::stage2
         S6["<b>Build & Push</b><br/>Push hardened image<br/>to GitHub Registry"]:::stage2
         S7["<b>SBOM Generation</b><br/>Syft generates CycloneDX<br/>inventory of dependencies"]:::stage2
+
         S5 --> S6 --> S7
     end
-    subgraph R3 ["Phase 3: Signing, Tagging & Orchestration (➔)"]
+
+    %% ==========================================
+    %% ROW 3: Moves Left -> Right
+    %% ==========================================
+    subgraph R3 ["Phase 3: Signing, Tagging & Orchestration (Left to Right ➔)"]
         direction LR
         S8["<b>Cosign Image Signing</b><br/>Cryptographically sign<br/>image digest with key-pair"]:::stage3
         S9["<b>Kustomize Auto-Tag</b><br/>Dynamically injects new<br/>commit SHA tag"]:::stage3
         S10["<b>JSON Artifacts</b><br/>Upload security reports<br/>& SBOM as build artifacts"]:::stage3
         S11["<b>Modular Workflow</b><br/>Master CI calls reusable<br/>Terraform infra pipeline"]:::stage3
+
         S8 --> S9 --> S10 --> S11
     end
-    subgraph R4 ["Phase 4: Cloud Infrastructure & Admission Control (🠔)"]
+
+    %% ==========================================
+    %% ROW 4: Moves Right -> Left
+    %% ==========================================
+    subgraph R4 ["Phase 4: Cloud Infrastructure & Admission Control (Right to Left 🠔)"]
         direction RL
         S12["<b>AWS IAM OIDC</b><br/>Keyless authentication<br/>(No static AWS secrets)"]:::stage4
         S13["<b>Terraform EKS & VPC</b><br/>Provisions cluster (v1.30)<br/>with S3 state lockfile"]:::stage4
         S14["<b>Kyverno Admission</b><br/>Enforces policy: blocks<br/>any unsigned image"]:::stage5
         S15["<b>Production EKS Pods</b><br/>Verified, signed workload<br/>executes on worker nodes"]:::stage5
+
         S12 --> S13 --> S14 --> S15
     end
-    S4 ==>|Passes Code Gates| S5
-    S7 ==>|SBOM Stored| S8
-    S11 ==>|Trigger Infrastructure| S12
+
+    %% ==========================================
+    %% Straight Down Vertical Connections (No Diagonals!)
+    %% ==========================================
+    S4 ==>|Straight Down| S5
+    S7 ==>|Straight Down| S8
+    S11 ==>|Straight Down| S12
+```
 ```
 
 ---
