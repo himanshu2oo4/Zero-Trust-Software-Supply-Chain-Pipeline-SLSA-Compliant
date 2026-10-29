@@ -6,4 +6,4 @@ resources:
 images:
 - name: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment
   newName: ghcr.io/himanshu2oo4/zero-trust-software-supply-chain-pipeline-slsa-compliant/secure-payment
-  newTag: 5bd1e5d6a20f5a1a43e2fdd80c3e2c75d73e7f53
+  newTag: fe4d43f12c7b8d6dcc3840a37973e547a13c6a71
