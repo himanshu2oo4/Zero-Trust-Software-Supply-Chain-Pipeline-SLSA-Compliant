@@ -8,7 +8,8 @@ resource "aws_iam_openid_connect_provider" "github" {
   # Both official GitHub SSL Thumbprints (fixes: "token could not be validated")
   thumbprint_list = [
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
-    "6938fd4d98bab03faadb97b34396831e3780aea1"
+    "6938fd4d98bab03faadb97b34396831e3780aea1" , 
+    "06d927fecd0a84aeba28aad1d808139470fe95c3"
   ]
 
   tags = {
