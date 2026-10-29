@@ -1,0 +1,202 @@
+name: Infra Pipeline on Terraform 
+on: 
+    workflow_call:
+        inputs: 
+            action: 
+                description: "Action to perform : plan , apply , destroy"
+                required: false 
+                default: "apply"
+                type: string
+
+    workflow_dispatch: 
+        inputs: 
+            action: 
+                description: "Action to perform : plan , apply , destroy"
+                required: true  
+                default: "plan"
+                type: choice
+                options: 
+                    - plan
+                    - apply 
+                    - destroy 
+                    
+permissions: 
+    id-token: write
+    contents: read
+
+env: 
+    TF_VERSION: '1.7.0'
+    WORKING_DIR: './terraform'
+
+jobs: 
+    tf-validate: 
+        runs-on: ubuntu-latest 
+        steps: 
+            - uses: actions/checkout@v4
+            - name: Set up Terraform 
+              uses: hashicorp/setup-terraform@v3
+              with: 
+                  terraform_version: ${{ env.TF_VERSION }}
+
+
+            - name: OIDC authentication 
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GitHubActions-Terraform-Validate
+                aws-region: ${{ secrets.AWS_REGION }}
+            
+            - name: Tf fmt check 
+              working-directory: ${{ env.WORKING_DIR }}
+              run: terraform run -check -recursive 
+              continue-on-error: true 
+
+            - name: Tf init
+              working-directory: ${{ env.WORKING_DIR }} 
+              run: terraform init 
+
+
+            - name: Tf validate 
+              working-directory: ${{ env.WORKING_DIR }} 
+              run: terraform validate  
+
+
+            - name: Run Checkov (IaC Security Scanner)
+              uses: bridgecrewio/checkov-action@master
+              with:
+                directory: terraform/
+                framework: terraform
+                output_format: json
+                output_file_path: checkov-report.json
+                soft_fail: true
+
+            - name: upload checkov artifact 
+              uses: actions/upload-artifact@v4
+              if: always()
+              with: 
+                name: tf-checkov-report 
+                path: checkov-report.json 
+                retention-days: 10 
+
+
+    tf-plan: 
+        runs-on: ubuntu-latest
+        steps: 
+            - uses: actions/checkout@v4 
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: ${{ env.TF_VERSION }}
+
+            - name: Configure AWS Credentials via OIDC
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GitHubActions-Terraform-Plan
+                aws-region: ${{ secrets.AWS_REGION }}
+
+
+            - name: Tf init
+              working-directory: ${{ env.WORKING_DIR }} 
+              run: terraform init 
+
+
+            - name: Tf plan  
+              working-directory: ${{ env.WORKING_DIR }} 
+              run: terraform plan -out=tfplan -input=false
+              
+            - name: Export Plan as JSON
+              working-directory: ${{ env.WORKING_DIR }}
+              run: terraform show -json tfplan > tfplan.json
+
+            - name: Upload plan as artifact
+              uses: actions/upload-artifact@v4
+              with: 
+                name: terraform plans 
+                path: | 
+                    terraform/tfplan
+                    terraform/tfplan.json 
+                retention-days: 7 
+
+            
+    tf-apply: 
+        name: terraform apply (provision eks )
+        needs: 
+            - tf-plan 
+        runs-on: ubuntu-latest 
+        if: | 
+           (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+           (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply') ||
+           (github.event_name == 'workflow_call' && inputs.action == 'apply')
+
+        steps: 
+            - name: checkout code 
+              uses: actions/checkout@v4 
+
+            - name: setting up tf 
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: ${{ env.TF_VERSION }}
+
+            - name: configuring AWS with OIDC 
+              uses: aws-action/configure-aws-credentials@v4 
+              with: 
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GitHubActions-Terraform-Apply
+                aws-region: ${{ secrets.AWS_REGION }}
+            
+            - name: tf init 
+              working-directory: ${{ env.WORKING_DIR }}
+              run: terraform init -upgrade 
+    #  ------------- DOWNLOADING THE TF PLAN FROM ARTIFACT of prev job 
+            - name: Download Terraform Plan
+              uses: actions/download-artifact@v4
+              with:
+                name: terraform-plan
+                path: terraform/
+
+            
+            - name: Tf apply 
+              working-directory: ${{ env.WORKING_DIR }}
+              run: | 
+                    terraform apply -input=false -auto-approve tfplan 
+
+            - name: Update kube-config for eks 
+              run: | 
+                aws eks update-kubeconfig --name devsecops-eks-cluster --region ${{ secrets.AWS_REGION }}
+
+            - name : checking for the nodes 
+              run: | 
+                kubectl get nodes -o wide 
+                echo "getting cluster info ---------"
+                kubectl cluster-info 
+
+    tf-destroy: 
+        name: tf destroy Manual only 
+        runs-on: ubuntu-latest 
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        steps: 
+            - uses: actions/checkout@v4 
+            - uses: hashicorp/setup-terraform@v3 
+              with: 
+                terraform-version: ${{ env.TF_VERSION }}
+            
+            - name: configuring AWS with OIDC 
+              uses: aws-action/configure-aws-credentials@v4
+              with: 
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GitHubActions-Terraform-Destroy
+                aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Tf init 
+              working-directory: ${{ env.WORKING_DIR }}
+              run: terraform init 
+
+            - name: Terraform destroy 
+              working-directory: ${{ env.WORKING_DIR }}
+              run: | 
+                terraform destroy -auto-approve -input=false 
+
+        
+
+        

@@ -185,3 +185,14 @@ jobs:
                   git add k8s/kustomization.yaml
                   git commit -m "Update image tag to ${{ github.sha }}"
                   git push origin main
+
+
+    provision-infrastructure: 
+      name: provision eks via terraform 
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      uses: ./.github/workflows/infra-pipeline.yml 
+      with: 
+        action: 'apply'
+      secrets: 
+        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}       # OIDC Role ARN
+        AWS_REGION: ${{ secrets.AWS_REGION }}
