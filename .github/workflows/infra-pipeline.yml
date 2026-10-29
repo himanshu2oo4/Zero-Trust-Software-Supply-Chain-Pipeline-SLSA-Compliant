@@ -80,6 +80,8 @@ jobs:
 
 
     tf-plan: 
+        needs: 
+            - tf-validate         # needs tf validate step to be completed first 
         runs-on: ubuntu-latest
         steps: 
             - uses: actions/checkout@v4 
