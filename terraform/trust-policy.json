@@ -6,7 +6,15 @@
       "Principal": {
         "Federated": "arn:aws:iam::815802019107:oidc-provider/token.actions.githubusercontent.com"
       },
-      "Action": "sts:AssumeRoleWithWebIdentity"
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:himanshu2oo4@86143385/Zero-Trust-Software-Supply-Chain-Pipeline-SLSA-Compliant@1436026323:*"
+        }
+      }
     }
   ]
 }
