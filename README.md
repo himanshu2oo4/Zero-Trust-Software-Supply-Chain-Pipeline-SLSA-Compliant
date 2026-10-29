@@ -28,43 +28,40 @@ In standard CI/CD pipelines, container registries trust any image pushed to them
 ## 🏗️ Architecture & Pipeline Flow
 
 The pipeline executes a clean, boustrophedon (snake-layout) flow with dedicated security checkpoints:
-========================================================================================================
-                          ZERO-TRUST SOFTWARE SUPPLY CHAIN PIPELINE (SLSA LEVEL 3)
-========================================================================================================
+```mermaid
+flowchart TD
+    %% Phase 1
+    subgraph P1 ["Phase 1: Code & Shift-Left Security"]
+        A1["1. Python App Code<br/>(FastAPI Microservice)"] --> A2["2. Gitleaks Secret Scan<br/>(Full Commit Tree)"]
+        A2 --> A3["3. Semgrep SAST Scan<br/>(OWASP Top 10)"]
+        A3 --> A4["4. Hardened Dockerfile<br/>(Non-root UID 10001)"]
+    end
 
- [ PHASE 1: Code & Shift-Left Security ]
- ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
- │  1. Python App Code  │ ──► │  2. Gitleaks Scan    │ ──► │  3. Semgrep SAST     │ ──► │ 4. Hardened Docker   │
- │  (FastAPI Service)   │     │  (Secret Detection)  │     │  (OWASP Top 10)      │     │ (Non-root UID 10001) │
- └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
-                                                                                                   │
- ┌─────────────────────────────────────────────────────────────────────────────────────────────────┘
- │
- ▼
- [ PHASE 2: Vulnerability Auditing & Supply Chain ]
- ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
- │  5. Trivy Scan       │ ──► │  6. Build & Push     │ ──► │  7. Syft SBOM        │
- │  (FS & OS CVEs)      │     │  (ghcr.io Registry)  │     │  (CycloneDX JSON)    │
- └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
-                                                                      │
- ┌────────────────────────────────────────────────────────────────────┘
- │
- ▼
- [ PHASE 3: Cryptographic Signing & Orchestration ]
- ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
- │  8. Cosign Signing   │ ──► │  9. Kustomize Tag    │ ──► │ 10. JSON Artifacts   │ ──► │ 11. Reusable Workflow│
- │  (Digital Signature) │     │  (Dynamic Git SHA)   │     │ (Compliance Storage) │     │ (Master -> Infra CI) │
- └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
-                                                                                                   │
- ┌─────────────────────────────────────────────────────────────────────────────────────────────────┘
- │
- ▼
- [ PHASE 4: Cloud Infrastructure & Zero-Trust Admission ]
- ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
- │ 12. AWS IAM OIDC     │ ──► │ 13. Terraform EKS    │ ──► │ 14. Kyverno Webhook  │ ──► │ 15. Production Nodes │
- │ (Zero Static Keys)   │     │ (VPC + EKS v1.30)    │     │ (Signature Check)    │     │ (Unsigned Blocked 403│
- └──────────────────────┘     └──────────────────────┘     └──────────────────────┘     └──────────────────────┘
-========================================================================================================
+    %% Phase 2
+    subgraph P2 ["Phase 2: Vulnerability Auditing & Supply Chain"]
+        B1["5. Trivy Scan<br/>(FS & Image CVEs)"] --> B2["6. Build & Push<br/>(GitHub Container Registry)"]
+        B2 --> B3["7. Anchore Syft<br/>(CycloneDX SBOM JSON)"]
+    end
+
+    %% Phase 3
+    subgraph P3 ["Phase 3: Cryptographic Signing & Orchestration"]
+        C1["8. Cosign Image Signing<br/>(Private/Public Key-Pair)"] --> C2["9. Kustomize Auto-Tagging<br/>(Dynamic Git SHA)"]
+        C2 --> C3["10. Compliance Artifacts<br/>(JSON Security Reports)"]
+        C3 --> C4["11. Reusable Workflow<br/>(Master calls Infra Pipeline)"]
+    end
+
+    %% Phase 4
+    subgraph P4 ["Phase 4: Cloud Infrastructure & Zero-Trust Admission"]
+        D1["12. AWS IAM OIDC<br/>(Keyless Authentication)"] --> D2["13. Terraform Provisioning<br/>(VPC + EKS v1.30 + S3 Lock)"]
+        D2 --> D3["14. Kyverno Policy<br/>(Admission Webhook Guard)"]
+        D3 --> D4["15. Verified Pods on EKS<br/>(Unsigned Images Blocked!)"]
+    end
+
+    %% Connections Between Phases
+    A4 -->|Passes Code Checks| B1
+    B3 -->|SBOM Generated| C1
+    C4 -->|Triggers Infrastructure| D1
+```
 
 ---
 
